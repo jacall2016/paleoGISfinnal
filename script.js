@@ -212,14 +212,14 @@ function getPBDBurl() {
   if (inputRegex1.test(inputValue)) {
     // If the input is in the correct format, extract genus and species
     let [genus, species] = inputValue.split(' ');
-    return `http://paleobiodb.org/data1.2/occs/list.json?base_name=${genus}%20${species}&show=coords,strat,stratext,lith,lithext`;
+    return `https://paleobiodb.org/data1.2/occs/list.json?base_name=${genus}%20${species}&show=coords,strat,stratext,lith,lithext`;
   } else if (inputRegex2.test(inputValue)) {
     genus = inputValue;
-    return `http://paleobiodb.org/data1.2/occs/list.json?base_name=${genus}&show=coords,strat,stratext,lith,lithext`
+    return `https://paleobiodb.org/data1.2/occs/list.json?base_name=${genus}&show=coords,strat,stratext,lith,lithext`
   }else {
     // If the input is not empty but not in the correct format, return default values for genus and species
     alert("Please enter a valid Genus or Genus and Species name in the format 'Genus' or 'Genus species'. Using default value.");
-    return `http://paleobiodb.org/data1.2/occs/list.json?base_name=${defaultGenus}%20${defaultSpecies}&show=coords,strat,stratext,lith,lithext`;
+    return `https://paleobiodb.org/data1.2/occs/list.json?base_name=${defaultGenus}%20${defaultSpecies}&show=coords,strat,stratext,lith,lithext`;
   }
 }
 
