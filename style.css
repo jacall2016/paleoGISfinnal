@@ -1,0 +1,50 @@
+/* style.css */
+
+/* Common styles for both desktop and mobile */
+#map-container {
+    width: 75%; /* Adjust the width as needed for desktop */
+    margin: 0 auto; /* Center the container horizontally */
+}
+
+#map {
+    height: 600px; /* Adjust the height as needed for desktop */
+}
+
+#slider {
+    width: 100%;
+    margin: 10px auto;
+}
+
+#slider-value {
+    display: block;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #000; /* Set the color you prefer */
+}
+
+input[type="range"] {
+    /* Remove default styling for WebKit browsers */
+    -webkit-appearance: none;
+    /* Width and height of the slider */
+    width: 100%;
+    height: 10px;
+    /* Background color on both sides of the slider */
+    background: #808080; /* Set the color you prefer */
+    /* Slider handle styling */
+    border: none;
+    border-radius: 5px;
+    background-color: lightgray; /* Set the color you prefer */
+}
+
+.marker-image {
+    width: 70%;
+    margin: 0 auto; /* Center the container horizontally */
+    border-radius: 50%;
+}
+
+/* Media query for mobile view */
+@media only screen and (max-width: 767px) {
+    #map {
+        height: 400px; /* Adjust the height as needed for mobile */
+    }
+}
