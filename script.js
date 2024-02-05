@@ -274,7 +274,7 @@ async function initMarkers() {
           marker.recordData = record;
 
           // Add a tooltip to the marker with detailed information about the fossil site
-          marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br>formation context: ${record.sfm} <br> Epoch: ${record.oei}`, { direction: 'top' });
+          marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br> Epoch: ${record.oei}`, { direction: 'top' });
           //marker.bindTooltip(`<strong>${record.species ? `${record.genus} ${record.species}` : record.genus}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br>formation context: ${record.sfm} <br> Epoch: ${record.oei}`, { direction: 'top' });
           marker.addTo(map);
           markers.push(marker);
