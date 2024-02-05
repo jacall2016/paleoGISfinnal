@@ -97,7 +97,7 @@ function updateMarkersVisibility() {
       // Toggle the tooltip based on visibility
       if (opacity > 0.1) {
         marker.unbindTooltip(); // Unbind tooltip if already bound
-        marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br>formation context: ${record.sfm} <br> Epoch: ${record.oei}`, { direction: 'top' });
+        marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Coordinates: ${record.lat} : ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br> Epoch: ${record.oei}`, { direction: 'top' });
       } else {
         marker.unbindTooltip(); // Unbind tooltip
       }
@@ -224,6 +224,7 @@ function getPBDBurl() {
 }
 
 function getImageUrl() {
+  //return "images/elephant.png"
   return "https://images.phylopic.org/images/9e470bbd-0227-40eb-b9de-fd2ad13ec933/raster/1024x637.png?v=1515e2ed66e";
 }
 
@@ -274,7 +275,7 @@ async function initMarkers() {
           marker.recordData = record;
 
           // Add a tooltip to the marker with detailed information about the fossil site
-          marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br> Epoch: ${record.oei}`, { direction: 'top' });
+          marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>coordinates: ${record.lat} : ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br> Epoch: ${record.oei}`, { direction: 'top' });
           //marker.bindTooltip(`<strong>${record.species ? `${record.genus} ${record.species}` : record.genus}</strong><br>Latitude: ${record.lat}<br>Longitude: ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br>formation context: ${record.sfm} <br> Epoch: ${record.oei}`, { direction: 'top' });
           marker.addTo(map);
           markers.push(marker);
