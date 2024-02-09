@@ -95,7 +95,7 @@ function updateMarkersVisibility() {
       marker.getElement().style.opacity = opacity;
 
       // Toggle the tooltip based on visibility
-      if (opacity > 0.1) {
+      if (opacity > 0.05) {
         marker.unbindTooltip(); // Unbind tooltip if already bound
         marker.bindTooltip(`<strong>${record.genus} ${record.species}</strong><br>Coordinates: ${record.lat} : ${record.lng}<br>Age: ${record.eag}-${record.lag} million years <br> Epoch: ${record.oei}`, { direction: 'top' });
       } else {
