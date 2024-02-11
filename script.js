@@ -222,10 +222,22 @@ function getPBDBurl() {
     return `https://paleobiodb.org/data1.2/occs/list.json?base_name=${defaultGenus}%20${defaultSpecies}&show=coords,strat,stratext,lith,lithext`;
   }
 }
+function getImageUrl(genus, species) {
+  // Define a dictionary (key-value pairs) for genus and image paths
+  const imagesDict = {
+    "Homo": "images/hand.png",
+    "Mammuthus": "images/mammoth.png"
+    // Add more entries as needed
+  };
 
-function getImageUrl() {
-  //return "images/elephant.png"
-  return "https://images.phylopic.org/images/9e470bbd-0227-40eb-b9de-fd2ad13ec933/raster/1024x637.png?v=1515e2ed66e";
+  // Check if the genus is in the dictionary
+  if (genus in imagesDict) {
+    // Return the associated image path
+    return imagesDict[genus];
+  }
+
+  // If the genus is not found, you can return a default image path or handle it as needed
+  return "images/fossil2.png";
 }
 
 // Function to capitalize the first letter of a string
@@ -255,7 +267,7 @@ async function initMarkers() {
 
       records.forEach(record => {
           const backgroundColor = generateColor(record.genus, record.species);
-          record.img = getImageUrl();
+          record.img = getImageUrl(record.genus, record.species);
 
           const initialOpacity = parseInt(slider.value) >= parseInt(record.oei) && parseInt(slider.value) <= parseInt(record.lag) ? 1 : 0;
 
