@@ -1,0 +1,33 @@
+Overview
+
+https://github.com/jacall2016/paleoGISfinnal
+
+https://jacall2016.github.io/paleoGISfinnal/
+
+As a software engineer striving to enhance my skills, I developed a GIS-based map software that visualizes fossil sites from the Paleobiology Database (PBDB). The application features a Time Slider, allowing users to filter fossil markers based on geological timeframes. Additionally, it incorporates a search input, enabling users to specify a genus and species or a single taxonomic group for marker display.
+
+The software employs color-coded markers to represent different genera and provides variations for each species within a genus, illustrating species relatedness. The transition effects between markers reflect speciation and extinction events, enhancing the overall visual experience.
+
+[Software Demo Video](https://youtu.be/ezoFNVMkbk8)
+
+Development Environment
+The software was developed using the following tools and technologies:
+
+Leaflet Library: Utilized for creating interactive maps.
+HTML, CSS, and JavaScript: Standard web development languages for building the user interface and handling dynamic content.
+Fetch API: Used for fetching fossil records from the PBDB.
+ArcGIS Online Tile Layer: Integrated to provide a detailed base map.
+Useful Websites
+During the development of this project, the following websites proved to be valuable resources:
+
+Leaflet Documentation: Essential documentation for the Leaflet library.
+Paleobiology Database (PBDB): Primary data source for fossil records.
+Stack Overflow: Community-driven platform for troubleshooting and problem-solving in coding.
+Future Work
+In future iterations of the software, the following improvements and additions are planned:
+
+Species List: Implement the ability to add species to a list, showcasing overlapping extinct animal ranges.
+Image Integration: Connect to a secondary database holding animal images or silhouettes to assign unique images to each marker icon.
+Performance Optimization: Enhance the speed of the site for smoother user interactions.
+Tooltip Links: Include links in tooltips to external sites providing information about specific species.
+Historic Range Visualization: Connect dots of the same species with shapes to depict historic ranges of the animal over time.
