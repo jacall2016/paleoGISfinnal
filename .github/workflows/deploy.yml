@@ -2,6 +2,9 @@
 name: Deploy Prehistoric Near Me to GitHub Pages
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -11,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: github-pages
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -38,11 +41,13 @@ jobs:
         run: yarn build
 
       - name: Upload production build
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
