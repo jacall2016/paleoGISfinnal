@@ -93,16 +93,6 @@ type PopupSelection = {
   zoomTarget: number;
 };
 
-function formatAge(age: number | null): string | null {
-  if (age === null || !Number.isFinite(age)) {
-    return null;
-  }
-
-  return `${age.toLocaleString(undefined, {
-    maximumFractionDigits: 3,
-  })} Ma`;
-}
-
 function getAgeOpacity(
   occurrence: FossilOccurrence,
   search: ExplorationSearch,
