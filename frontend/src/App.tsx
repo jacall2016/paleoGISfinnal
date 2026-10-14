@@ -5,8 +5,8 @@ import {
   Clock3,
   Layers3,
   MapPin,
-  LocateFixed,
 } from 'lucide-react';
+import ExplorationMap from './features/exploration/ExplorationMap';
 
 const navigation = [
   { label: 'Explore', icon: Compass, active: true },
@@ -74,7 +74,7 @@ export default function App() {
         </aside>
 
         <section className="min-w-0 flex-1 p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <p className="text-sm font-medium text-[var(--color-accent)]">
               YOUR WINDOW INTO DEEP TIME
             </p>
@@ -87,50 +87,30 @@ export default function App() {
               Explore ancient ecosystems, discover fossil finds, and see how
               the world around you has changed across geological time.
             </p>
-          </div>
+          </div> */}
 
           <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] p-4">
               <div className="flex items-center gap-3">
                 <Map size={20} className="text-[var(--color-accent)]" />
+
                 <div>
                   <h3 className="font-medium">Ancient Earth Explorer</h3>
                   <p className="text-xs text-[var(--color-text-muted)]">
-                    Interactive map coming next
+                    Fine fossils near you
                   </p>
                 </div>
               </div>
 
-              <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs text-[var(--color-text-muted)]">
-                Foundation
-              </span>
+              {/* <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs text-[var(--color-text-muted)]">
+                PBDB occurrences
+              </span> */}
             </div>
 
-            <div className="flex min-h-[340px] flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,var(--color-surface-raised),var(--color-surface))] p-6 text-center sm:min-h-[440px]">
-              <div className="mb-5 flex size-16 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)]">
-                <Map size={30} className="text-[var(--color-accent)]" />
-              </div>
-
-              <h3 className="text-lg font-semibold">
-                The world is your field site.
-              </h3>
-
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-text-muted)]">
-                This space will become the GIS explorer for fossil
-                localities, ancient geography, and nearby prehistoric life.
-              </p>
-
-              <button
-                type="button"
-                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-background)] transition hover:bg-[var(--color-accent-hover)]"
-              >
-                <LocateFixed size={17} />
-                Explore the map
-              </button>
-            </div>
+            <ExplorationMap />
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {/* <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <article className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
               <Search size={20} className="text-[var(--color-accent)]" />
               <h3 className="mt-4 font-medium">Discover ancient life</h3>
@@ -148,11 +128,11 @@ export default function App() {
                 geography with reconstructed ancient continents.
               </p>
             </article>
-          </div>
+          </div> */}
         </section>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-[var(--color-border)] bg-[var(--color-background)]/95 px-2 py-2 backdrop-blur md:hidden">
+      {/* <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-[var(--color-border)] bg-[var(--color-background)]/95 px-2 py-2 backdrop-blur md:hidden">
         {navigation.map(({ label, icon: Icon, active }) => (
           <button
             key={label}
@@ -167,7 +147,7 @@ export default function App() {
             {label}
           </button>
         ))}
-      </nav>
+      </nav> */}
     </main>
   );
 }
