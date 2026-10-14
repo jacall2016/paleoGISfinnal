@@ -1,0 +1,831 @@
+/* =========================================================
+   Prehistoric Near Me — Exploration Map
+   Dark geological theme
+   ========================================================= */
+
+.exploration-experience {
+  --panel-bg: #151d1e;
+  --panel-elevated: #1c2728;
+  --panel-border: rgb(218 225 214 / 13%);
+  --panel-muted: #9ba9a5;
+  --panel-text: #e9eee8;
+  --panel-accent: #c3a66f;
+  --panel-accent-bright: #e5c88e;
+  --panel-error: #ffb6a8;
+  --panel-warning: #e8c887;
+
+  color: var(--color-text, var(--panel-text));
+}
+
+.exploration-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(560px, 78vh, 900px);
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--color-surface, #101719);
+}
+
+.exploration-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-surface, #101719);
+}
+
+.exploration-map .maplibregl-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* =========================================================
+   Panel toggle
+   Supports .panel-toggle and .exploration-panel-toggle
+   ========================================================= */
+
+.panel-toggle,
+.exploration-panel-toggle {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 12px;
+  background: #182223;
+  color: #f3f5ef;
+  box-shadow: 0 5px 18px rgb(0 0 0 / 25%);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.panel-toggle:hover,
+.exploration-panel-toggle:hover,
+.control-button:hover,
+.panel-close-button:hover {
+  filter: brightness(1.12);
+}
+
+.active-filter-count,
+.exploration-panel-toggle__count {
+  display: inline-grid;
+  flex: 0 0 auto;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--panel-accent, #c3a66f);
+  color: #17201d;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   Slide-out filter panel
+   ========================================================= */
+
+.exploration-side-panel {
+  position: absolute;
+  z-index: 6;
+  inset: 0 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(390px, 100%);
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  box-shadow: -12px 0 36px rgb(0 0 0 / 22%);
+  scrollbar-color: #465651 transparent;
+  scrollbar-width: thin;
+  transform: translateX(105%);
+  visibility: hidden;
+  transition:
+    transform 220ms ease,
+    visibility 220ms;
+}
+
+.exploration-side-panel.is-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+/* Keep the old hidden state working during migration. */
+.exploration-side-panel.is-closed {
+  transform: translateX(105%);
+  visibility: hidden;
+}
+
+/* New component markup can use aria-hidden as well. */
+.exploration-side-panel[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+.side-panel-header,
+.exploration-side-panel__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 23px 20px 19px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, #202e2c, #151d1e 75%);
+}
+
+.side-panel-header h1,
+.exploration-side-panel__header h1,
+.exploration-side-panel__header h2 {
+  margin: 5px 0 7px;
+  color: #f4f3e9;
+  font-size: clamp(22px, 2vw, 27px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #c4a977;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+}
+
+.side-panel-subtitle,
+.exploration-side-panel__header p {
+  max-width: 290px;
+  margin: 0;
+  color: #aab7b0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.panel-close-button,
+.exploration-side-panel__close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  background: rgb(255 255 255 / 4%);
+  color: #eaf0e8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.side-panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 14px 18px;
+  scrollbar-color: #465651 transparent;
+  scrollbar-width: thin;
+}
+
+/* =========================================================
+   Filter categories — existing <details> UI
+   ========================================================= */
+
+.filter-category {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.filter-category > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 51px;
+  cursor: pointer;
+  list-style: none;
+  color: #e9eee8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.filter-category > summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-category > summary::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-left: 2px;
+  border-right: 1.5px solid #9eaaa4;
+  border-bottom: 1.5px solid #9eaaa4;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 160ms ease;
+}
+
+.filter-category[open] > summary::after {
+  transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.category-value {
+  margin-left: auto;
+  overflow: hidden;
+  color: #aebcb3;
+  font-size: 11px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-fields,
+.side-taxon-search {
+  display: grid;
+  gap: 9px;
+  padding: 0 0 17px;
+}
+
+/* =========================================================
+   Filter controls
+   ========================================================= */
+
+.exploration-side-panel label {
+  display: block;
+  color: #c1cbc4;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.exploration-side-panel input:not([type="range"]),
+.exploration-side-panel select,
+.exploration-side-panel textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid #3a4945;
+  border-radius: 8px;
+  outline: none;
+  background: #202b2b;
+  color: #edf1e9;
+  font: inherit;
+  font-size: 12px;
+}
+
+.exploration-side-panel input::placeholder,
+.exploration-side-panel textarea::placeholder {
+  color: #81918a;
+  opacity: 1;
+}
+
+.exploration-side-panel input:focus-visible,
+.exploration-side-panel select:focus-visible,
+.exploration-side-panel textarea:focus-visible,
+.exploration-side-panel button:focus-visible,
+.filter-category summary:focus-visible {
+  outline: 2px solid #c9ae78;
+  outline-offset: 2px;
+}
+
+.exploration-side-panel input:disabled,
+.exploration-side-panel select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.exploration-side-panel input[type="checkbox"],
+.exploration-side-panel input[type="radio"] {
+  width: auto;
+  min-height: auto;
+  accent-color: #c6a76e;
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px;
+  border: 1px solid #3a4945;
+  border-radius: 8px;
+  background: #202b2b;
+  color: #9ba9a5;
+}
+
+.search-input-row input:not([type="range"]) {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.control-button,
+.exploration-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 37px;
+  padding: 8px 11px;
+  border: 1px solid #43534d;
+  border-radius: 8px;
+  background: #263332;
+  color: #eaf0e8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.control-button-primary {
+  border-color: #c3a66f;
+  background: #c3a66f;
+  color: #19211e;
+}
+
+.location-button {
+  margin-top: 3px;
+}
+
+.control-button-reset {
+  width: 100%;
+  margin-top: 14px;
+  background: transparent;
+  color: #c6b58f;
+}
+
+.range-control,
+.exploration-range-control {
+  display: grid;
+  gap: 8px;
+  padding: 5px 0 3px;
+}
+
+.range-label-row,
+.range-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.range-label-row output {
+  color: #e5c88e;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.range-scale {
+  color: #8d9d95;
+  font-size: 10px;
+}
+
+.exploration-side-panel input[type="range"] {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  accent-color: #c6a76e;
+  cursor: grab;
+}
+
+.exploration-side-panel input[type="range"]:active {
+  cursor: grabbing;
+}
+
+.exploration-side-panel small {
+  color: #92a19a;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.exploration-mode-options {
+  display: grid;
+  gap: 10px;
+}
+
+.exploration-mode-options label,
+.exploration-side-panel label.exploration-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exploration-mode-options input,
+.exploration-checkbox input {
+  flex: 0 0 auto;
+}
+
+.exploration-side-panel__message,
+.location-message {
+  margin: 2px 0 0;
+  color: #d9c391;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.exploration-side-panel__footer,
+.side-panel-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--panel-border);
+  color: #84948c;
+  font-size: 10px;
+}
+
+/* =========================================================
+   Map legend
+   ========================================================= */
+
+.map-key-content p {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  color: #b9c5bd;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.legend-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+  border: 2px solid #eee9da;
+  border-radius: 50%;
+  background: #c3a66f;
+}
+
+.legend-dot-icon {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #e9eee8;
+  font-size: 16px;
+}
+
+.search-summary {
+  margin: 10px 0 0;
+  color: var(--panel-muted);
+  font-size: 12px;
+}
+
+/* =========================================================
+   Map status
+   Supports the original status classes and new component
+   ========================================================= */
+
+.map-status {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  gap: 4px;
+  box-sizing: border-box;
+  max-width: min(70%, 360px);
+  padding: 9px 12px;
+  border: 1px solid var(--color-border, #35413e);
+  border-radius: 10px;
+  background: rgb(16 23 25 / 94%);
+  color: var(--color-text, #e9eee8);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.map-status p {
+  margin: 0;
+}
+
+.map-status p + p {
+  margin-top: 4px;
+}
+
+.map-status-error,
+.map-status__message--error {
+  color: var(--panel-error, #ffb6a8);
+}
+
+.map-status-warning,
+.map-status__message--warning {
+  color: var(--panel-warning, #e8c887);
+}
+
+.map-status__message,
+.map-status__count {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* =========================================================
+   Legacy single-site popup
+   Keep this until the new popup is connected.
+   ========================================================= */
+
+.site-popup {
+  max-width: 230px;
+  color: #20282a;
+}
+
+.site-popup p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.site-popup small {
+  display: block;
+  margin-top: 10px;
+  color: #5b6465;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   New grouped occurrence popup
+   ========================================================= */
+
+.occurrence-popup {
+  width: 100%;
+  color: #202b2d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.occurrence-popup__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1ded5;
+}
+
+.occurrence-popup__title {
+  display: block;
+  color: #202b2d;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.occurrence-popup__summary {
+  margin-top: 3px;
+  color: #657174;
+  font-size: 10px;
+}
+
+.occurrence-popup__zoom {
+  display: grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #d5d0c4;
+  border-radius: 8px;
+  background: #f7f4ec;
+  color: #202b2d;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.occurrence-popup__zoom:hover {
+  background: #ebe3d1;
+}
+
+.occurrence-popup__zoom:focus-visible,
+.occurrence-group__toggle:focus-visible,
+.occurrence-record__toggle:focus-visible {
+  outline: 2px solid #947341;
+  outline-offset: 2px;
+}
+
+.occurrence-popup__zoom-message {
+  margin: 7px 0 0;
+  color: #765b2e;
+  font-size: 10px;
+}
+
+.occurrence-popup__groups {
+  display: grid;
+  gap: 2px;
+  max-height: 300px;
+  margin-top: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #c5bdad transparent;
+  scrollbar-width: thin;
+}
+
+.occurrence-group {
+  min-width: 0;
+  border-bottom: 1px solid #ece9e1;
+}
+
+.occurrence-group__toggle,
+.occurrence-record__toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 3px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.occurrence-group__name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #283638;
+  font-weight: 650;
+}
+
+.occurrence-group__count {
+  flex: 0 0 auto;
+  color: #765b2e;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.occurrence-group__records {
+  display: grid;
+  gap: 2px;
+  padding: 0 3px 7px 8px;
+}
+
+.occurrence-record {
+  min-width: 0;
+  padding-left: 7px;
+  border-left: 2px solid #e5ddcb;
+}
+
+.occurrence-record__toggle {
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 3px;
+  color: #4d5b5e;
+  font-size: 11px;
+}
+
+.occurrence-record__details {
+  padding: 0 3px 8px;
+  overflow-wrap: anywhere;
+}
+
+.occurrence-record__details p {
+  margin: 4px 0;
+  color: #4d5b5e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.occurrence-record__details strong {
+  color: #293638;
+}
+
+.occurrence-popup__footer {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #e1ded5;
+  color: #657174;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   MapLibre popup polish
+   ========================================================= */
+
+.maplibregl-popup-content {
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 22%);
+}
+
+.maplibregl-popup-close-button {
+  z-index: 2;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 0 8px 0 6px;
+  color: #4d5b5e;
+  font-size: 18px;
+}
+
+.maplibregl-popup-close-button:hover {
+  background: #eee9df;
+  color: #202b2d;
+}
+
+/* =========================================================
+   Responsive layout
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .exploration-shell {
+    height: min(82dvh, 820px);
+    min-height: 500px;
+  }
+
+  .exploration-side-panel {
+    width: min(100%, 420px);
+    border-left: 0;
+    box-shadow: -10px 0 32px rgb(0 0 0 / 35%);
+  }
+
+  .side-panel-header,
+  .exploration-side-panel__header {
+    padding: 18px 16px 15px;
+  }
+
+  .side-panel-content {
+    padding: 7px 14px 16px;
+  }
+
+  .panel-toggle,
+  .exploration-panel-toggle {
+    top: 10px;
+    right: 10px;
+    min-height: 40px;
+  }
+
+  .map-status {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 90px);
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .occurrence-popup__groups {
+    max-height: 35dvh;
+  }
+
+  .exploration-side-panel__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 380px) {
+  .exploration-shell {
+    min-height: 460px;
+  }
+
+  .occurrence-popup__header {
+    gap: 6px;
+  }
+
+  .maplibregl-popup-content {
+    padding: 10px;
+  }
+}
+
+/* =========================================================
+   Accessibility
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .exploration-side-panel,
+  .filter-category > summary::after {
+    transition: none;
+  }
+}

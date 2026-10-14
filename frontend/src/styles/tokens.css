@@ -1,0 +1,27 @@
+:root {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --color-background: #101719;
+  --color-surface: #192326;
+  --color-surface-raised: #222f32;
+  --color-surface-hover: #2b3a3d;
+
+  /* Text */
+  --color-text: #f2f0e8;
+  --color-text-muted: #aab7b5;
+
+  /* Accents */
+  --color-accent: #d2b47c;
+  --color-accent-hover: #e2c997;
+  --color-border: rgb(222 231 224 / 12%);
+
+  /* Layout */
+  --content-max-width: 90rem;
+  --header-height: 4rem;
+  --mobile-nav-height: 4.5rem;
+
+  /* Shape and spacing */
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+}

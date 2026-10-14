@@ -43,7 +43,7 @@ input[type="range"] {
     /* Slider handle styling */
     border: none;
     border-radius: 5px;
-    background-color: lightgray; /* Set the color you prefer */
+    background-color: rgb(211, 211, 211); /* Set the color you prefer */
 }
 
 .marker-image {
