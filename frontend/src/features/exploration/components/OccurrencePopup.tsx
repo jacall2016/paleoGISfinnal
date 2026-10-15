@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Popup } from 'react-map-gl/maplibre';
 
 import type { FossilOccurrence } from '../fossilTypes';
 import { groupOccurrences } from '../utils/occurrenceGrouping';
+import { resolveTaxonIcon } from '../../../services/phyloPic/taxonIconResolver';
 
 export type PopupAnchor =
   | 'top'
@@ -62,10 +63,71 @@ export default function OccurrencePopup({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set(),
   );
+
   const [expandedRecords, setExpandedRecords] = useState<Set<string>>(
     () => new Set(),
   );
+
   const [zoomMessage, setZoomMessage] = useState('');
+
+  // Maps each organism group's key to its successfully resolved
+  // PhyloPic image URL. Missing icons are deliberately omitted.
+  const [groupIconUrls, setGroupIconUrls] = useState<
+    Map<string, string>
+  >(() => new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveGroupIcons() {
+      const results = await Promise.all(
+        groups.map(async (group) => {
+          const representative = group.occurrences[0];
+
+          if (!representative) {
+            return [group.key, null] as const;
+          }
+
+          try {
+            const result = await resolveTaxonIcon(representative);
+
+            // Do not display the generic local fallback as if it
+            // were an actual taxonomic silhouette.
+            if (result.source !== 'phylopic') {
+              return [group.key, null] as const;
+            }
+
+            return [group.key, result.imageUrl] as const;
+          } catch (error) {
+            console.warn(
+              `Could not resolve a popup icon for "${group.scientificName}".`,
+              error,
+            );
+
+            return [group.key, null] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const nextIcons = new Map<string, string>();
+
+      for (const [groupKey, imageUrl] of results) {
+        if (imageUrl) {
+          nextIcons.set(groupKey, imageUrl);
+        }
+      }
+
+      setGroupIconUrls(nextIcons);
+    }
+
+    void resolveGroupIcons();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groups]);
 
   function toggleGroup(key: string) {
     setExpandedGroups((current) => {
@@ -115,6 +177,7 @@ export default function OccurrencePopup({
             <strong className="occurrence-popup__title">
               Fossil localities
             </strong>
+
             <div className="occurrence-popup__summary">
               {occurrences.length} occurrence
               {occurrences.length === 1 ? '' : 's'} · {groups.length}{' '}
@@ -144,6 +207,7 @@ export default function OccurrencePopup({
         <div className="occurrence-popup__groups">
           {groups.map((group) => {
             const isExpanded = expandedGroups.has(group.key);
+            const iconUrl = groupIconUrls.get(group.key);
 
             return (
               <section
@@ -156,8 +220,37 @@ export default function OccurrencePopup({
                   onClick={() => toggleGroup(group.key)}
                   aria-expanded={isExpanded}
                 >
-                  <span className="occurrence-group__name">
-                    <em>{group.scientificName}</em>
+                  <span
+                    className="occurrence-group__identity"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      minWidth: 0,
+                      flex: 1,
+                    }}
+                  >
+                    {iconUrl && (
+                      <img
+                        className="occurrence-group__icon"
+                        src={iconUrl}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          objectFit: 'contain',
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+
+                    <span className="occurrence-group__name">
+                      <em>{group.scientificName}</em>
+                    </span>
                   </span>
 
                   <span className="occurrence-group__count">
@@ -190,6 +283,7 @@ export default function OccurrencePopup({
                             <span>
                               {getAgeLabel(occurrence)}
                             </span>
+
                             <span aria-hidden="true">
                               {recordExpanded ? '−' : '+'}
                             </span>
