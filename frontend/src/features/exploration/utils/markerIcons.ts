@@ -2,7 +2,6 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 
 import {
-  DEFAULT_FOSSIL_ICON,
   loadDefaultFossilIcon,
   registerDefaultFossilFallback,
 } from './fallbackMarkerIcon';

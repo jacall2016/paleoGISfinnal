@@ -1,3 +1,4 @@
+
 interface MapStatusProps {
   loading: boolean;
   error: string | null;
@@ -15,6 +16,8 @@ export default function MapStatus({
   truncated,
   hasAgeFilter,
 }: MapStatusProps) {
+  const hasOccurrences = totalOccurrences > 0;
+
   return (
     <div
       className="map-status"
@@ -23,13 +26,17 @@ export default function MapStatus({
     >
       {loading && (
         <p className="map-status__message">
-          Loading fossil occurrences…
+          {hasOccurrences
+            ? 'Updating fossil occurrences…'
+            : 'Finding fossil occurrences…'}
         </p>
       )}
 
       {error && (
         <p className="map-status__message map-status__message--error">
-          Unable to load fossils: {error}
+          {hasOccurrences
+            ? `Some occurrence data could not be loaded: ${error}`
+            : `Unable to load fossils: ${error}`}
         </p>
       )}
 
@@ -48,7 +55,7 @@ export default function MapStatus({
           </p>
         )}
 
-      {!error && totalOccurrences > 0 && (
+      {hasOccurrences && (
         <p className="map-status__count">
           Showing {visibleOccurrences.toLocaleString()} of{' '}
           {totalOccurrences.toLocaleString()} loaded occurrences

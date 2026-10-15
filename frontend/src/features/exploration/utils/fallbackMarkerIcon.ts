@@ -1,11 +1,11 @@
-
 import type { Map as MapLibreMap } from 'maplibre-gl';
+
+import defaultFossilSvgUrl from '../../../assets/icons/default-fossil.svg';
 
 export const DEFAULT_FOSSIL_ICON = 'default-fossil';
 
 const DEFAULT_ICON_SIZE = 64;
-const DEFAULT_ICON_URL =
-  `${import.meta.env.BASE_URL}icons/default-fossil.svg`;
+const DEFAULT_ICON_URL = defaultFossilSvgUrl;
 
 /**
  * Draw a paw-print icon on a transparent canvas.
@@ -91,7 +91,7 @@ export function registerDefaultFossilFallback(
 export async function loadDefaultFossilIcon(
   map: MapLibreMap,
 ): Promise<void> {
-  // Ensure the fallback exists before starting asynchronous work.
+  // Register the fallback before starting asynchronous work.
   registerDefaultFossilFallback(map);
 
   let objectUrl: string | undefined;
@@ -101,13 +101,22 @@ export async function loadDefaultFossilIcon(
 
     if (!response.ok) {
       throw new Error(
-        `Default fossil icon request failed: HTTP ${response.status}`,
+        `Default fossil icon request failed: HTTP ${response.status} at ${response.url}`,
       );
     }
 
     const svgText = await response.text();
+    const contentType = response.headers.get('content-type');
 
+    // Reject HTML error pages or other unexpected responses.
     if (!/<svg(?:\s|>)/i.test(svgText)) {
+      console.error('Unexpected default fossil icon response:', {
+        requestedUrl: DEFAULT_ICON_URL,
+        responseUrl: response.url,
+        contentType,
+        preview: svgText.slice(0, 200),
+      });
+
       throw new Error(
         'The default fossil icon response is not an SVG document.',
       );
@@ -123,11 +132,15 @@ export async function loadDefaultFossilIcon(
 
     await new Promise<void>((resolve, reject) => {
       image.onload = () => resolve();
+
       image.onerror = () => {
         reject(
-          new Error('The default fossil SVG could not be decoded.'),
+          new Error(
+            `The default fossil SVG could not be decoded: ${response.url}`,
+          ),
         );
       };
+
       image.src = objectUrl!;
     });
 
@@ -154,6 +167,8 @@ export async function loadDefaultFossilIcon(
     const width = sourceWidth * scale;
     const height = sourceHeight * scale;
 
+    context.clearRect(0, 0, size, size);
+
     context.drawImage(
       image,
       (size - width) / 2,
@@ -162,16 +177,18 @@ export async function loadDefaultFossilIcon(
       height,
     );
 
-    // Replace the paw with the SVG without changing the image ID.
-    if (map.hasImage(DEFAULT_FOSSIL_ICON)) {
+    // Only replace the icon if the map still has the registered image.
+    if (
+      map.getStyle() &&
+      map.hasImage(DEFAULT_FOSSIL_ICON)
+    ) {
       map.updateImage(
         DEFAULT_FOSSIL_ICON,
         context.getImageData(0, 0, size, size),
       );
     }
   } catch (error) {
-    // The paw is already registered, so no additional fallback
-    // registration is necessary.
+    // The paw is already registered, so retain it on failure.
     console.warn(
       'Default fossil SVG unavailable; retaining the drawn paw-print fallback.',
       error,

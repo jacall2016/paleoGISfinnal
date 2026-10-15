@@ -1,134 +1,181 @@
+
 import { useEffect, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-
 import type { FossilOccurrence } from '../fossilTypes';
-import { loadRemoteTaxonIcon } from '../utils/markerIcons';
 import { resolveTaxonIcon } from '../../../services/phyloPic/taxonIconResolver';
 import { getTaxonMapIconId } from '../../../services/phyloPic/mapIconId';
+import { loadRemoteTaxonIcon } from '../utils/markerIcons';
 
 type VisibleOccurrence = {
   occurrence: FossilOccurrence;
   opacity: number;
 };
 
+type IconResolution = string | null;
+
 /**
- * Resolves PhyloPic images and registers them with MapLibre.
- *
- * The returned map associates occurrence IDs with registered MapLibre
- * image IDs. Occurrences without a remote icon continue to use the
- * existing fallback behavior in the map layers.
+ * Share PhyloPic lookups across hook rerenders and filter changes.
+ * Successful icon IDs and failed lookups are cached so taxa without
+ * images do not trigger repeated requests.
  */
+const taxonIconCache = new Map<string, IconResolution>();
+const taxonIconInFlight = new Map<string, Promise<IconResolution>>();
+
+const MAX_CONCURRENT_TAXON_LOOKUPS = 3;
+
+/**
+ * Prevent broad searches from triggering hundreds of external requests.
+ * Additional taxa can be loaded on a later search or filter change.
+ */
+const MAX_TAXA_PER_PASS = 40;
+
+function normalizeTaxonName(name: string): string {
+  return name.trim().toLocaleLowerCase();
+}
+
+async function resolveOneTaxonIcon(
+  map: MapLibreMap,
+  occurrence: FossilOccurrence,
+  taxonName: string,
+): Promise<IconResolution> {
+  const key = normalizeTaxonName(taxonName);
+
+  if (taxonIconCache.has(key)) {
+    return taxonIconCache.get(key) ?? null;
+  }
+
+  const existing = taxonIconInFlight.get(key);
+  if (existing) return existing;
+
+  const promise = (async (): Promise<IconResolution> => {
+    try {
+      const result = await resolveTaxonIcon(occurrence);
+
+      if (result.source !== 'phylopic' || !result.imageUrl) {
+        taxonIconCache.set(key, null);
+        return null;
+      }
+
+      const iconId = getTaxonMapIconId(taxonName);
+      const loaded = await loadRemoteTaxonIcon(
+        map,
+        iconId,
+        result.imageUrl,
+      );
+
+      const resolved = loaded ? iconId : null;
+      taxonIconCache.set(key, resolved);
+
+      return resolved;
+    } catch (error) {
+      // Cache failures for this page session to prevent retry storms.
+      taxonIconCache.set(key, null);
+
+      console.warn(
+        `Could not load a PhyloPic icon for "${taxonName}".`,
+        error,
+      );
+
+      return null;
+    } finally {
+      taxonIconInFlight.delete(key);
+    }
+  })();
+
+  taxonIconInFlight.set(key, promise);
+
+  return promise;
+}
+
 export function useTaxonMapIcons(
   map: MapLibreMap | null,
   visibleOccurrences: VisibleOccurrence[],
 ): Map<string, string> {
-  const [taxonIconIds, setTaxonIconIds] = useState<Map<string, string>>(
+  const [iconIds, setIconIds] = useState<Map<string, string>>(
     () => new Map(),
   );
 
   useEffect(() => {
-    if (!map) {
-      setTaxonIconIds(new Map());
-      return;
-    }
+    if (!map || !map.isStyleLoaded()) return;
 
-    // Capture the non-null map for use in asynchronous callbacks.
     const activeMap = map;
     let cancelled = false;
 
-    async function loadTaxonIcons() {
-      const nextIcons = new Map<string, string>();
+    const uniqueTaxa = new Map<string, FossilOccurrence>();
 
-      // Resolve each distinct scientific name only once per effect run.
-      const uniqueTaxa = new Map<string, FossilOccurrence>();
+    for (const { occurrence } of visibleOccurrences) {
+      const name = occurrence.scientificName?.trim();
 
-      for (const { occurrence } of visibleOccurrences) {
+      if (!name) continue;
+
+      const key = normalizeTaxonName(name);
+
+      if (!uniqueTaxa.has(key)) {
+        uniqueTaxa.set(key, occurrence);
+      }
+
+      if (uniqueTaxa.size >= MAX_TAXA_PER_PASS) break;
+    }
+
+    const work = [...uniqueTaxa.entries()];
+    const nextIcons = new Map<string, string>();
+    let nextIndex = 0;
+
+    async function worker() {
+      while (!cancelled && nextIndex < work.length) {
+        const [key, occurrence] = work[nextIndex++];
+
         const name = occurrence.scientificName?.trim();
-
         if (!name) continue;
 
-        const normalizedName = name.toLocaleLowerCase();
+        const iconId = await resolveOneTaxonIcon(
+            activeMap,
+            occurrence,
+            name,
+        );
 
-        if (!uniqueTaxa.has(normalizedName)) {
-          uniqueTaxa.set(normalizedName, occurrence);
+        if (cancelled) return;
+
+        if (iconId) {
+          nextIcons.set(key, iconId);
         }
-      }
-
-      // Resolve different taxa concurrently.
-      const resolvedTaxa = await Promise.all(
-        [...uniqueTaxa.entries()].map(
-          async ([normalizedName, occurrence]) => {
-            const name = occurrence.scientificName.trim();
-
-            try {
-              const result = await resolveTaxonIcon(occurrence);
-
-              // Only register remotely resolved PhyloPic images here.
-              if (result.source !== 'phylopic') {
-                return [normalizedName, null] as const;
-              }
-
-              // The map icon ID is shared by occurrences of the same taxon.
-              const imageId = getTaxonMapIconId(name);
-
-              const loaded = await loadRemoteTaxonIcon(
-                activeMap,
-                imageId,
-                result.imageUrl,
-              );
-
-              return [
-                normalizedName,
-                loaded ? imageId : null,
-              ] as const;
-            } catch (error) {
-              console.warn(
-                `Could not resolve a map icon for "${name}".`,
-                error,
-              );
-
-              return [normalizedName, null] as const;
-            }
-          },
-        ),
-      );
-
-      // Ignore results if this effect has been cleaned up.
-      if (cancelled) return;
-
-      const iconIdByTaxon = new Map<string, string>();
-
-      for (const [normalizedName, imageId] of resolvedTaxa) {
-        if (imageId) {
-          iconIdByTaxon.set(normalizedName, imageId);
-        }
-      }
-
-      // Map taxon-level results back to individual occurrences.
-      for (const { occurrence } of visibleOccurrences) {
-        const normalizedName =
-          occurrence.scientificName?.trim().toLocaleLowerCase();
-
-        if (!normalizedName) continue;
-
-        const imageId = iconIdByTaxon.get(normalizedName);
-
-        if (imageId) {
-          nextIcons.set(occurrence.id, imageId);
-        }
-      }
-
-      if (!cancelled) {
-        setTaxonIconIds(nextIcons);
       }
     }
 
-    void loadTaxonIcons();
+    void Promise.all(
+      Array.from(
+        {
+          length: Math.min(
+            MAX_CONCURRENT_TAXON_LOOKUPS,
+            work.length,
+          ),
+        },
+        () => worker(),
+      ),
+    ).then(() => {
+      if (cancelled) return;
+
+      // Map taxon icon IDs to each matching occurrence ID.
+      const byOccurrenceId = new Map<string, string>();
+
+      for (const { occurrence } of visibleOccurrences) {
+        const name = occurrence.scientificName?.trim();
+        if (!name) continue;
+
+        const iconId = nextIcons.get(normalizeTaxonName(name));
+
+        if (iconId) {
+          byOccurrenceId.set(occurrence.id, iconId);
+        }
+      }
+
+      setIconIds(byOccurrenceId);
+    });
 
     return () => {
       cancelled = true;
     };
   }, [map, visibleOccurrences]);
 
-  return taxonIconIds;
+  return iconIds;
 }

@@ -1,6 +1,6 @@
 import type { FossilOccurrence } from '../../features/exploration/fossilTypes';
 import { getCachedPhyloPicImage } from './taxonIconCache';
-
+import defaultFossilSvgUrl from '../../assets/icons/default-fossil.svg';
 export type TaxonIconMatch =
   | 'name-match'
   | 'genus-match'
@@ -17,8 +17,7 @@ export interface ResolvedTaxonIcon {
   source: 'phylopic' | 'local';
 }
 
-const DEFAULT_ICON_URL =
-  `${import.meta.env.BASE_URL}icons/default-fossil.svg`;
+const DEFAULT_ICON_URL = defaultFossilSvgUrl;
 
 interface TaxonCandidate {
   name: string;
